@@ -1,0 +1,40 @@
+[
+  {
+    "id": "post-1",
+    "title": "Welcome to My Blog",
+    "category": "General",
+    "status": "published",
+    "featuredImage": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800",
+    "blocks": [
+      { "type": "heading", "content": "Hello World!" },
+      { "type": "text", "content": "This is my first blog post. I built this blog using HTML, CSS, and JavaScript — no backend required!\n\nEverything you see here is loaded from a simple JSON file stored in my GitHub repository." },
+      { "type": "box", "style": "info", "content": "💡 Tip: You can edit the posts.json file directly on GitHub to add or update posts." },
+      { "type": "divider", "content": "divider" },
+      { "type": "heading", "content": "What I Can Add" },
+      { "type": "list", "content": "Text paragraphs\nHeadings and subheadings\nImages with captions\nInfo/warning/success boxes\nQuotes\nLinks\nCode blocks\nDividers\nLists" },
+      { "type": "text", "content": "Pretty cool, right?" }
+    ],
+    "excerpt": "This is my first blog post. I built this blog using HTML, CSS, and JavaScript — no backend required!",
+    "createdAt": "2026-08-03T20:00:00.000Z",
+    "updatedAt": "2026-08-03T20:00:00.000Z"
+  },
+  {
+    "id": "post-2",
+    "title": "How This Blog Works",
+    "category": "Tutorial",
+    "status": "published",
+    "featuredImage": "",
+    "blocks": [
+      { "type": "heading", "content": "GitHub as a Database" },
+      { "type": "text", "content": "Instead of using a traditional database like MySQL or MongoDB, this blog stores all posts in a JSON file inside a GitHub repository." },
+      { "type": "box", "style": "success", "content": "✅ All visitors see the same content because everyone is reading from the same JSON file." },
+      { "type": "heading", "content": "The Workflow" },
+      { "type": "list", "content": "Edit posts.json on GitHub\nCommit the changes\nThe blog automatically fetches the latest version\nVisitors see the updated content instantly" },
+      { "type": "code", "content": "// Example post structure\n{\n  \"id\": \"post-3\",\n  \"title\": \"My New Post\",\n  \"category\": \"Life\",\n  \"status\": \"published\",\n  \"blocks\": [...]\n}" },
+      { "type": "link", "content": "Learn more about GitHub Pages", "url": "https://pages.github.com/" }
+    ],
+    "excerpt": "Instead of using a traditional database, this blog stores all posts in a JSON file inside a GitHub repository.",
+    "createdAt": "2026-08-03T21:00:00.000Z",
+    "updatedAt": "2026-08-03T21:00:00.000Z"
+  }
+]

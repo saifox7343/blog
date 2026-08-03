@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">📰 My Blog</div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="admin.html">Admin Dashboard</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Welcome to My Blog</h1>
+        <p>Thoughts, stories, and ideas.</p>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="widget">
+                <h3>Search</h3>
+                <input type="text" id="searchInput" placeholder="Search posts..." onkeyup="searchPosts()">
+            </div>
+            <div class="widget">
+                <h3>Categories</h3>
+                <ul id="categoryList"></ul>
+            </div>
+            <div class="widget">
+                <h3>Stats</h3>
+                <p id="blogStats">Loading...</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div id="postsContainer">
+                <div class="loading">Loading posts...</div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Built with HTML, CSS & JavaScript</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSettings();
+            await renderPosts();
+            await renderCategories();
+            await updateStats();
+        });
+    </script>
+</body>
+</html>

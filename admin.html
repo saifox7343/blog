@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - My Blog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">⚙️ Admin Dashboard</div>
+        <div class="nav-links">
+            <a href="index.html">View Blog</a>
+            <a href="admin.html" class="active">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <h3>Menu</h3>
+            <ul>
+                <li><a href="#setup" class="admin-nav active" onclick="showSection('setup')">🔑 GitHub Setup</a></li>
+                <li><a href="#posts" class="admin-nav" onclick="showSection('posts')">📄 All Posts</a></li>
+                <li><a href="#editor" class="admin-nav" onclick="showSection('editor')">✏️ New Post</a></li>
+                <li><a href="#images" class="admin-nav" onclick="showSection('images')">🖼️ Images</a></li>
+                <li><a href="#settings" class="admin-nav" onclick="showSection('settings')">⚙️ Settings</a></li>
+            </ul>
+            <div class="admin-stats">
+                <h4>Quick Stats</h4>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalPosts">0</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="publishedPosts">0</span>
+                    <span class="stat-label">Published</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="draftPosts">0</span>
+                    <span class="stat-label">Drafts</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <!-- GitHub Setup Section -->
+            <section id="setup-section" class="admin-section active">
+                <h2>🔑 GitHub Setup</h2>
+                <p style="color:#64748b;margin-bottom:1.5rem;">Connect your GitHub repository to publish posts and upload images directly from this dashboard.</p>
+
+                <div id="setupStatus"></div>
+
+                <form onsubmit="saveGitHubConfig(event)" style="margin-top:1.5rem;">
+                    <div class="form-group">
+                        <label>GitHub Username (Owner)</label>
+                        <input type="text" id="ghOwner" placeholder="e.g., johndoe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Repository Name</label>
+                        <input type="text" id="ghRepo" placeholder="e.g., my-blog" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Personal Access Token</label>
+                        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" required>
+                        <small style="color:#64748b;display:block;margin-top:0.25rem;">
+                            Create one at: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <input type="text" id="ghBranch" value="main" placeholder="main">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Credentials</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearGitHubConfig()">Clear</button>
+                    </div>
+                </form>
+
+                <div style="margin-top:2rem;padding:1.5rem;background:#f8fafc;border-radius:12px;">
+                    <h3>📖 How to Get Your Token</h3>
+                    <ol style="margin-top:0.75rem;padding-left:1.2rem;line-height:1.8;">
+                        <li>Go to <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a></li>
+                        <li>Click <strong>"Generate new token (classic)"</strong></li>
+                        <li>Give it a name like "Blog Admin"</li>
+                        <li>Check the <strong>"repo"</strong> scope (full control of private repositories)</li>
+                        <li>Click <strong>"Generate token"</strong></li>
+                        <li><strong>Copy the token immediately</strong> — you can't see it again!</li>
+                        <li>Paste it above and click <strong>"Save Credentials"</strong></li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- Posts List Section -->
+            <section id="posts-section" class="admin-section">
+                <h2>All Posts</h2>
+                <div class="posts-toolbar">
+                    <input type="text" id="adminSearch" placeholder="Search posts..." onkeyup="filterAdminPosts()">
+                    <button class="btn btn-primary" onclick="showSection('editor'); resetEditor();">+ New Post</button>
+                </div>
+                <div id="adminPostsList" class="admin-posts-list">
+                    <p>Loading posts...</p>
+                </div>
+            </section>
+
+            <!-- Editor Section -->
+            <section id="editor-section" class="admin-section">
+                <h2 id="editorTitle">New Post</h2>
+
+                <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:1rem;margin-bottom:1.5rem;border-radius:6px;">
+                    <strong>💡 How it works:</strong> Write your post here, then click <strong>"Publish to GitHub"</strong>. 
+                    Your post will be saved directly to your GitHub repository and appear on your live blog in ~30 seconds!
+                </div>
+
+                <form id="postForm" onsubmit="savePostToGitHub(event)">
+                    <div class="form-group">
+                        <label>Post Title</label>
+                        <input type="text" id="postTitle" required placeholder="Enter post title...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" id="postCategory" placeholder="e.g., Technology, Life">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="postStatus">
+                                <option value="published">Published</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Featured Image URL</label>
+                        <input type="text" id="postImage" placeholder="https://... or use an uploaded image">
+                        <small style="color:#64748b;display:block;margin-top:0.25rem;">
+                            Paste an image URL, or upload images in the <strong>Images</strong> tab and click "Use"
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content Blocks</label>
+                        <div class="blocks-toolbar">
+                            <button type="button" class="btn btn-small" onclick="addBlock('text')">📝 Text</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('heading')">📌 Heading</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('image')">🖼️ Image</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('box')">📦 Box</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('quote')">💬 Quote</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('link')">🔗 Link</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('code')">💻 Code</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('divider')">➖ Divider</button>
+                            <button type="button" class="btn btn-small" onclick="addBlock('list')">📋 List</button>
+                        </div>
+                        <div id="blocksContainer" class="blocks-container">
+                            <p class="blocks-empty">Click buttons above to add content blocks</p>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">🚀 Publish to GitHub</button>
+                        <button type="button" class="btn btn-secondary" onclick="showSection('posts')">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deletePostFromGitHub(document.getElementById('editingPostId').value)">🗑️ Delete from GitHub</button>
+                    </div>
+                    <input type="hidden" id="editingPostId">
+                </form>
+            </section>
+
+            <!-- Images Section -->
+            <section id="images-section" class="admin-section">
+                <h2>🖼️ Image Upload</h2>
+                <p style="color:#64748b;margin-bottom:1.5rem;">Upload images directly to your GitHub repository. They'll be stored in an <code>images/</code> folder.</p>
+
+                <div class="form-group">
+                    <label>Select Images</label>
+                    <input type="file" id="imageUploadInput" accept="image/*" multiple onchange="uploadImageToGitHub(event)">
+                    <small style="color:#64748b;display:block;margin-top:0.25rem;">Supports JPG, PNG, GIF, WebP. Max size depends on GitHub's limits.</small>
+                </div>
+
+                <div id="imageUploadStatus"></div>
+
+                <h3 style="margin-top:2rem;margin-bottom:1rem;">Your Uploaded Images</h3>
+                <div id="imageGallery" class="media-grid"></div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="admin-section">
+                <h2>Blog Settings</h2>
+                <form onsubmit="saveSettings(event)">
+                    <div class="form-group">
+                        <label>Blog Title</label>
+                        <input type="text" id="blogTitle" value="My Blog">
+                    </div>
+                    <div class="form-group">
+                        <label>Blog Description</label>
+                        <textarea id="blogDescription" rows="3">Thoughts, stories, and ideas.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Posts Per Page</label>
+                        <input type="number" id="postsPerPage" value="10" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Theme Color</label>
+                        <select id="themeColor">
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                            <option value="purple">Purple</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-danger" onclick="clearAllData()">⚠️ Clear Local Data</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadGitHubConfig();
+            await loadSettings();
+            await renderAdminPosts();
+            await updateAdminStats();
+            renderImageGallery();
+        });
+    </script>
+</body>
+</html>
