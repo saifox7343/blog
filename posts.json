@@ -3,7 +3,7 @@
     "id": "msds7rqf02rtmprrqfn",
     "title": "ABeer",
     "category": "School",
-    "status": "draft",
+    "status": "published",
     "featuredImage": "",
     "blocks": [
       {
@@ -13,7 +13,7 @@
     ],
     "excerpt": "hello am abeer eltomn menya university",
     "createdAt": "2026-08-03T22:09:27.591Z",
-    "updatedAt": "2026-08-03T22:09:27.591Z"
+    "updatedAt": "2026-08-03T22:14:20.476Z"
   },
   {
     "id": "post-2",
