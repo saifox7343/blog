@@ -1,5 +1,21 @@
 [
   {
+    "id": "msds7rqf02rtmprrqfn",
+    "title": "ABeer",
+    "category": "School",
+    "status": "draft",
+    "featuredImage": "",
+    "blocks": [
+      {
+        "type": "text",
+        "content": "hello am abeer eltomn menya university"
+      }
+    ],
+    "excerpt": "hello am abeer eltomn menya university",
+    "createdAt": "2026-08-03T22:09:27.591Z",
+    "updatedAt": "2026-08-03T22:09:27.591Z"
+  },
+  {
     "id": "post-2",
     "title": "How This Blog Works",
     "category": "Tutorial",
