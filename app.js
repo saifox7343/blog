@@ -1,6 +1,5 @@
 // ===== CONFIG =====
 const CONFIG = {
-    // GitHub API settings (user fills these in)
     get owner() { return localStorage.getItem('gh_owner') || ''; },
     get repo() { return localStorage.getItem('gh_repo') || ''; },
     get token() { return localStorage.getItem('gh_token') || ''; },
@@ -10,12 +9,10 @@ const CONFIG = {
         return this.owner && this.repo && this.token;
     },
 
-    // Auto-detect if running on GitHub Pages
     get isGitHubPages() {
         return location.hostname.includes('github.io');
     },
 
-    // Build raw GitHub URL
     get rawBaseUrl() {
         if (!this.isGitHubPages) return null;
         const pathParts = location.pathname.split('/').filter(Boolean);
@@ -24,13 +21,11 @@ const CONFIG = {
         return `https://raw.githubusercontent.com/${user}/${repo}/main/`;
     },
 
-    // API base URL
     get apiBaseUrl() {
         if (!this.isConfigured) return null;
         return `https://api.github.com/repos/${this.owner}/${this.repo}`;
     },
 
-    // URLs for data files
     get postsUrl() { 
         if (this.isConfigured) return this.rawBaseUrl + 'posts.json';
         return this.isGitHubPages ? this.rawBaseUrl + 'posts.json' : null; 
@@ -81,28 +76,48 @@ async function getFileSha(path) {
         const data = await githubApi(`/contents/${path}?ref=${CONFIG.branch}`);
         return data.sha;
     } catch (e) {
-        return null; // File doesn't exist yet
+        if (e.message && e.message.includes('404')) return null;
+        throw e;
     }
 }
 
-async function commitFile(path, content, message) {
+function utf8ToBase64(str) {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+async function commitFile(path, content, message, retryCount = 0) {
     const sha = await getFileSha(path);
     const body = {
         message: message,
-        content: btoa(unescape(encodeURIComponent(content))), // UTF-8 safe base64
+        content: utf8ToBase64(content),
         branch: CONFIG.branch
     };
     if (sha) body.sha = sha;
 
-    return githubApi(`/contents/${path}`, {
-        method: 'PUT',
-        body: JSON.stringify(body)
-    });
+    try {
+        return await githubApi(`/contents/${path}`, {
+            method: 'PUT',
+            body: JSON.stringify(body)
+        });
+    } catch (err) {
+        // If SHA mismatch and we haven't retried yet, retry once
+        if (err.message && err.message.includes('does not match') && retryCount < 2) {
+            console.log('SHA mismatch, retrying...');
+            await new Promise(r => setTimeout(r, 1000));
+            return commitFile(path, content, message, retryCount + 1);
+        }
+        throw err;
+    }
 }
 
-async function commitImage(path, base64Data, message) {
+async function commitImage(path, base64Data, message, retryCount = 0) {
     const sha = await getFileSha(path);
-    // Remove data:image/xxx;base64, prefix if present
     const cleanBase64 = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
 
     const body = {
@@ -112,10 +127,19 @@ async function commitImage(path, base64Data, message) {
     };
     if (sha) body.sha = sha;
 
-    return githubApi(`/contents/${path}`, {
-        method: 'PUT',
-        body: JSON.stringify(body)
-    });
+    try {
+        return await githubApi(`/contents/${path}`, {
+            method: 'PUT',
+            body: JSON.stringify(body)
+        });
+    } catch (err) {
+        if (err.message && err.message.includes('does not match') && retryCount < 2) {
+            console.log('SHA mismatch, retrying...');
+            await new Promise(r => setTimeout(r, 1000));
+            return commitImage(path, base64Data, message, retryCount + 1);
+        }
+        throw err;
+    }
 }
 
 // ===== FETCH POSTS =====
@@ -197,7 +221,10 @@ async function savePostToGitHub(event) {
     saveBtn.disabled = true;
 
     try {
-        // 1. Fetch current posts from GitHub
+        // Clear cache to get fresh data
+        invalidateCache();
+
+        // 1. Fetch current posts from GitHub (fresh)
         let posts = await fetchPosts();
         const id = document.getElementById('editingPostId').value;
         const blocks = collectBlocks();
@@ -222,7 +249,7 @@ async function savePostToGitHub(event) {
             posts.unshift(postData);
         }
 
-        // 2. Commit to GitHub
+        // 2. Commit to GitHub with retry
         await commitFile('posts.json', JSON.stringify(posts, null, 2), 
             id ? `Update post: ${postData.title}` : `Add post: ${postData.title}`);
 
@@ -237,8 +264,8 @@ async function savePostToGitHub(event) {
         resetEditor();
 
     } catch (err) {
-        alert('❌ Error: ' + err.message);
         console.error(err);
+        alert('❌ Error: ' + err.message + '\n\nTry again in a few seconds.');
     } finally {
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
@@ -253,6 +280,7 @@ async function deletePostFromGitHub(id) {
     }
 
     try {
+        invalidateCache();
         let posts = await fetchPosts();
         const post = getPost(id, posts);
         posts = posts.filter(p => p.id !== id);
@@ -312,11 +340,9 @@ async function uploadImageToGitHub(event) {
         }
     }
 
-    // Store uploaded images
     const existing = Storage.get('blog_images', []);
     Storage.set('blog_images', [...existing, ...uploadedUrls]);
 
-    // Show results
     container.innerHTML = uploadedUrls.map(img => `
         <div style="display:flex;align-items:center;gap:1rem;margin:0.5rem 0;padding:0.75rem;background:#f0fdf4;border-radius:6px;">
             <img src="${img.url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;">
@@ -335,10 +361,8 @@ async function uploadImageToGitHub(event) {
 function useImageUrl(url) {
     const imgInput = document.getElementById('postImage');
     if (imgInput) imgInput.value = url;
-    // Also add as image block if in editor
     const container = document.getElementById('blocksContainer');
     if (container && !container.querySelector('.blocks-empty')) {
-        // Add image block with this URL
         blockCounter++;
         const blockId = `block-${blockCounter}`;
         const blockEl = document.createElement('div');
